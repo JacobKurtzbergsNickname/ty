@@ -1,0 +1,38 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# SQLite and local DBs
+*.sqlite3
+*.db
+*.sqlite
+
+# VS Code
+.vscode/
+
+# Test and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# uv cache
+.uv/
+
+# FastHTML/uv logs
+*.log
+
+# Miscellaneous
+*.bak
+**/.sesskey
