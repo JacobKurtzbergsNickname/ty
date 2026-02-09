@@ -1,17 +1,25 @@
-
 [project]
 name = "ty"
 version = "0.1.0"
-description = "Add your description here"
+description = "A simple gratitude diary"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "pydantic>=2.12.5",
     "python-fasthtml>=0.12.41",
+    "sqlalchemy>=2.0.46",
 ]
 
 [project.scripts]
-dev = "main:main"
+dev = "app.main:main"
 
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.pyright]
+ignore = [
+    "app/services/**",
+    "app/database/models.py"
+]
+reportWildcardImportFromLibrary = false
