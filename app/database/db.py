@@ -66,7 +66,18 @@ def get_prod_db_path() -> str:
             raise RuntimeError("APPDATA environment variable not set on Windows.")
         db_dir = os.path.join(appdata, "ty")
     else:
-        db_dir = os.path.expanduser("~/.local/share/ty")
+        # Linux/Unix: prefer XDG_DATA_HOME when available, then fall back to
+        # the freedesktop.org default (~/.local/share).
+        xdg_data_home = os.environ.get("XDG_DATA_HOME")
+        if xdg_data_home:
+            db_dir = os.path.join(xdg_data_home, "ty")
+        else:
+            home = os.environ.get("HOME")
+            if home:
+                db_dir = os.path.join(home, ".local", "share", "ty")
+            else:
+                # Last-resort Linux fallback for minimal/container environments.
+                db_dir = "/var/lib/ty"
     os.makedirs(db_dir, exist_ok=True)
     db_path = os.path.join(db_dir, "ty.sqlite3")
     return f"sqlite:///{db_path}"
