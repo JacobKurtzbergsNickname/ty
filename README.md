@@ -41,3 +41,15 @@ This project prioritizes:
 ├── README.md
 ├── CONTRIBUTING.md
 └── pyproject.toml
+
+## Running with Docker
+
+Build and run with Docker Compose:
+
+```bash
+docker compose up --build
+```
+
+The app is available at `http://localhost:5001`.
+
+Database data is persisted in a named Docker volume mounted at `/var/lib/ty` in the container.

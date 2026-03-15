@@ -1,0 +1,17 @@
+services:
+  ty-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ty-app:latest
+    environment:
+      TY_ENV: production
+      XDG_DATA_HOME: /var/lib
+    ports:
+      - "5001:5001"
+    volumes:
+      - ty_data:/var/lib/ty
+    restart: unless-stopped
+
+volumes:
+  ty_data:
