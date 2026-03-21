@@ -545,6 +545,7 @@ name = "ty"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "httpx" },
     { name = "pydantic" },
     { name = "pytest" },
     { name = "python-fasthtml" },
@@ -553,6 +554,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "httpx", specifier = ">=0.27" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "python-fasthtml", specifier = ">=0.12.41" },
