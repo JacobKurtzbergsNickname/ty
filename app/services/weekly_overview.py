@@ -28,18 +28,15 @@ def get_tracked_objects_by_week(
     each containing a list of items created between start_date and end_date (inclusive).
     """
     with Session() as session:
-        # Try to filter by created_at if present, else fallback to all
         def filter_by_date(model, schema):
-            # Only filter if model has created_at
-            if hasattr(model, "created_at"):
+            if hasattr(model, "date"):
                 q = select(model).where(
-                    model.created_at >= start_date,
-                    model.created_at <= end_date,
+                    model.date >= start_date,
+                    model.date <= end_date,
                 )
-                items = session.scalars(q).all()
             else:
-                items = session.scalars(select(model)).all()
-            return [schema.model_validate(item) for item in items]
+                q = select(model)
+            return [schema.model_validate(item) for item in session.scalars(q).all()]
 
         result = {
             "gratitude": filter_by_date(GratitudeItem, GratitudeItemRead),
