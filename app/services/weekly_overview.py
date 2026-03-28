@@ -3,7 +3,7 @@ Service function to aggregate all tracked objects by week.
 """
 
 from datetime import date
-from typing import List, Any, Dict
+from typing import Any
 from sqlalchemy import select
 from app.database.db import Session
 from app.database.models import (
@@ -22,7 +22,7 @@ from app.validation.schemas import (
 
 def get_tracked_objects_by_week(
     start_date: date, end_date: date
-) -> Dict[str, List[Any]]:
+) -> dict[str, list[Any]]:
     """
     Returns a dict with keys: 'gratitude', 'good_things', 'affirmations', 'quotes',
     each containing a list of items created between start_date and end_date (inclusive).
@@ -39,10 +39,7 @@ def get_tracked_objects_by_week(
                 items = session.scalars(q).all()
             else:
                 items = session.scalars(select(model)).all()
-            return [
-                schema(**{k: getattr(item, k) for k in schema.model_fields})
-                for item in items
-            ]
+            return [schema.model_validate(item) for item in items]
 
         result = {
             "gratitude": filter_by_date(GratitudeItem, GratitudeItemRead),
