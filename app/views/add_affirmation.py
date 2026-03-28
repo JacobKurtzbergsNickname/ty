@@ -1,6 +1,5 @@
 """View to add a new affirmation."""
 
-from typing import cast
 from fasthtml.common import *
 from fasthtml.core import Request, FT
 from app.services import create_affirmation
@@ -13,8 +12,8 @@ affirmation_app, rt = fast_app()
 async def create_affirmation_view(req: Request) -> FT:
     if req.method == "POST":
         posted_form = await req.form()
-        text = cast(str, posted_form["text"])
-        author = cast(str, posted_form.get("author", ""))
+        text = posted_form["text"]
+        author = posted_form.get("author", "")
         if text:
             create_affirmation(
                 AffirmationCreate(

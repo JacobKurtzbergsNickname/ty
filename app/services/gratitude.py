@@ -2,7 +2,7 @@
 Service functions for GratitudeItem model.
 """
 
-from typing import List, Optional
+from sqlalchemy import select
 from app.database.db import Session
 from app.database.models import GratitudeItem
 from app.validation.schemas import GratitudeItemCreate, GratitudeItemRead
@@ -20,40 +20,17 @@ def create_gratitude_item(data: GratitudeItemCreate) -> GratitudeItemRead:
         session.add(item)
         session.commit()
         session.refresh(item)
-        return GratitudeItemRead(
-            id=item.id,
-            title=item.title,
-            description=item.description,
-            how_happy_am_i_about_this=item.how_happy_am_i_about_this,
-            reused=item.reused,
-            date=item.date,
-        )
+        return GratitudeItemRead.model_validate(item)
 
 
-def get_gratitude_item(item_id: int) -> Optional[GratitudeItemRead]:
+def get_gratitude_item(item_id: int) -> GratitudeItemRead | None:
     with Session() as session:
-        item = session.get(GratitudeItem, item_id)
-        if not item:
-            return None
-        return GratitudeItemRead(
-            id=item.id,
-            title=item.title,
-            description=item.description,
-            how_happy_am_i_about_this=item.how_happy_am_i_about_this,
-            reused=item.reused,
-        )
+        if item := session.get(GratitudeItem, item_id):
+            return GratitudeItemRead.model_validate(item)
+        return None
 
 
-def list_gratitude_items() -> List[GratitudeItemRead]:
+def list_gratitude_items() -> list[GratitudeItemRead]:
     with Session() as session:
-        items = session.query(GratitudeItem).all()
-        return [
-            GratitudeItemRead(
-                id=i.id,
-                title=i.title,
-                description=i.description,
-                how_happy_am_i_about_this=i.how_happy_am_i_about_this,
-                reused=i.reused,
-            )
-            for i in items
-        ]
+        items = session.scalars(select(GratitudeItem)).all()
+        return [GratitudeItemRead.model_validate(i) for i in items]

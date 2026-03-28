@@ -1,4 +1,3 @@
-from typing import cast
 from fasthtml.common import *
 from fasthtml.core import Request, FT
 from app.services import create_good_thing
@@ -11,8 +10,8 @@ good_thing_app, rt = fast_app()
 async def create_good_thing_view(req: Request) -> FT:
     if req.method == "POST":
         form = await req.form()
-        description = cast(str, form.get("description", "")).strip()
-        impact = cast(str, form.get("impact", "1"))
+        description = str(form.get("description", "")).strip()
+        impact = str(form.get("impact", "1"))
         if description:
             create_good_thing(
                 GoodThingsThatHappenedToMeCreate(

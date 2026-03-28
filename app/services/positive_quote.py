@@ -2,7 +2,7 @@
 Service functions for PositiveQuote model.
 """
 
-from typing import List, Optional
+from sqlalchemy import select
 from app.database.db import Session
 from app.database.models import PositiveQuote
 from app.validation.schemas import PositiveQuoteCreate, PositiveQuoteRead
@@ -18,34 +18,17 @@ def create_positive_quote(data: PositiveQuoteCreate) -> PositiveQuoteRead:
         session.add(item)
         session.commit()
         session.refresh(item)
-        return PositiveQuoteRead(
-            id=item.id,
-            text=item.text,
-            author=item.author,
-            date=item.date,
-        )
+        return PositiveQuoteRead.model_validate(item)
 
 
-def get_positive_quote(item_id: int) -> Optional[PositiveQuoteRead]:
+def get_positive_quote(item_id: int) -> PositiveQuoteRead | None:
     with Session() as session:
-        item = session.get(PositiveQuote, item_id)
-        if not item:
-            return None
-        return PositiveQuoteRead(
-            id=item.id,
-            text=item.text,
-            author=item.author,
-        )
+        if item := session.get(PositiveQuote, item_id):
+            return PositiveQuoteRead.model_validate(item)
+        return None
 
 
-def list_positive_quotes() -> List[PositiveQuoteRead]:
+def list_positive_quotes() -> list[PositiveQuoteRead]:
     with Session() as session:
-        items = session.query(PositiveQuote).all()
-        return [
-            PositiveQuoteRead(
-                id=i.id,
-                text=i.text,
-                author=i.author,
-            )
-            for i in items
-        ]
+        items = session.scalars(select(PositiveQuote)).all()
+        return [PositiveQuoteRead.model_validate(i) for i in items]

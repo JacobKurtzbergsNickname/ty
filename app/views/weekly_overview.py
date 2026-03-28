@@ -1,4 +1,5 @@
 import calendar
+from collections.abc import Callable
 from datetime import date, timedelta
 from typing import Sequence, TypeVar
 from fasthtml.common import *
@@ -45,12 +46,10 @@ def weekly_overview_view(req: Request) -> FT:
         cls="container mb-4 flex space-between align-center",
     )
 
-    # Helper to get day names for the week (robust, no range(7))
-    day_names = []
-    current = week_start
-    while current <= week_end:
-        day_names.append((current, calendar.day_name[current.weekday()]))
-        current += timedelta(days=1)
+    day_names = [
+        (week_start + timedelta(days=i), calendar.day_name[(week_start + timedelta(days=i)).weekday()])
+        for i in range(7)
+    ]
 
     # Helper to group all objects by day
     def group_by_day(items: Sequence[T]) -> dict[date, list[T]]:
@@ -68,49 +67,23 @@ def weekly_overview_view(req: Request) -> FT:
     affirm_by_day = group_by_day(data["affirmations"])
     quotes_by_day = group_by_day(data["quotes"])
 
+    def render_section(title: str, items: list, render_fn: Callable) -> FT | None:
+        if not items:
+            return None
+        return Div(
+            H4(title, cls="mb-1"),
+            *[Div(render_fn(item), cls="mb-2") for item in items],
+            cls="mb-3",
+        )
+
     def render_day(d: date, dname: str) -> FT:
-        sections = []
-        if gratitude_by_day[d]:
-            sections.append(
-                Div(
-                    H4("Gratitude Items", cls="mb-1"),
-                    *[
-                        Div(render_gratitude(item), cls="mb-2")
-                        for item in gratitude_by_day[d]
-                    ],
-                    cls="mb-3",
-                )
-            )
-        if good_by_day[d]:
-            sections.append(
-                Div(
-                    H4("Good Things That Happened", cls="mb-1"),
-                    *[
-                        Div(render_good_thing(item), cls="mb-2")
-                        for item in good_by_day[d]
-                    ],
-                    cls="mb-3",
-                )
-            )
-        if affirm_by_day[d]:
-            sections.append(
-                Div(
-                    H4("Affirmations", cls="mb-1"),
-                    *[
-                        Div(render_affirmation(item), cls="mb-2")
-                        for item in affirm_by_day[d]
-                    ],
-                    cls="mb-3",
-                )
-            )
-        if quotes_by_day[d]:
-            sections.append(
-                Div(
-                    H4("Positive Quotes", cls="mb-1"),
-                    *[Div(render_quote(item), cls="mb-2") for item in quotes_by_day[d]],
-                    cls="mb-3",
-                )
-            )
+        candidates = [
+            render_section("Gratitude Items", gratitude_by_day[d], render_gratitude),
+            render_section("Good Things That Happened", good_by_day[d], render_good_thing),
+            render_section("Affirmations", affirm_by_day[d], render_affirmation),
+            render_section("Positive Quotes", quotes_by_day[d], render_quote),
+        ]
+        sections = [s for s in candidates if s is not None]
         if not sections:
             sections.append(
                 Div(

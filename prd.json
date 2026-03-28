@@ -1,0 +1,107 @@
+{
+  "title": "Pythonic Code Quality Improvements – Round 2",
+  "description": "Remaining clean-code and idiomatic-Python improvements identified after the first refactor pass. Each task is self-contained and can be implemented and tested independently.",
+  "tasks": [
+    {
+      "id": "T01",
+      "status": "done",
+      "title": "Fix dead date-filter logic in weekly_overview service",
+      "priority": "high",
+      "file": "app/services/weekly_overview.py",
+      "problem": "filter_by_date() checks hasattr(model, 'created_at'), but no model has that attribute — they all have 'date'. The date-range WHERE clause therefore never runs; every call returns ALL rows regardless of start_date/end_date.",
+      "change": "Replace the hasattr(model, 'created_at') branch with a check for hasattr(model, 'date') and filter on model.date. Remove the dead else-branch that returns all rows unconditionally.",
+      "before": "if hasattr(model, 'created_at'):\n    q = select(model).where(model.created_at >= start_date, model.created_at <= end_date)\n    items = session.scalars(q).all()\nelse:\n    items = session.scalars(select(model)).all()",
+      "after": "if hasattr(model, 'date'):\n    q = select(model).where(model.date >= start_date, model.date <= end_date)\nelse:\n    q = select(model)\nitems = session.scalars(q).all()"
+    },
+    {
+      "id": "T02",
+      "title": "Replace single-letter date alias 'D' with plain 'date'",
+      "priority": "medium",
+      "file": "app/validation/schemas.py",
+      "problem": "'from datetime import date as D' aliases the standard library type to a single uppercase letter. This is non-idiomatic and makes the intent opaque to readers unfamiliar with the alias.",
+      "change": "Change the import to 'from datetime import date' and replace all uses of 'D' with 'date' throughout the file.",
+      "before": "from datetime import date as D\n...\ndate: D = Field(default_factory=D.today)",
+      "after": "from datetime import date\n...\ndate: date = Field(default_factory=date.today)"
+    },
+    {
+      "id": "T03",
+      "title": "Use f-string in db.py RuntimeError",
+      "priority": "low",
+      "file": "app/database/db.py",
+      "problem": "Line 54 uses string concatenation ('Could not find project root from ' + str(current)) instead of an f-string, inconsistent with the rest of the codebase.",
+      "change": "Replace with f'Could not find project root from {current}'.",
+      "before": "raise RuntimeError(\"Could not find project root from \" + str(current))",
+      "after": "raise RuntimeError(f\"Could not find project root from {current}\")"
+    },
+    {
+      "id": "T04",
+      "title": "Standardise get_prod_db_path to use pathlib.Path",
+      "priority": "low",
+      "file": "app/database/db.py",
+      "problem": "get_dev_db_path() uses pathlib.Path throughout, but get_prod_db_path() uses os.path.join/os.makedirs — mixing two styles in the same module.",
+      "change": "Rewrite get_prod_db_path() using pathlib.Path, matching the style of get_dev_db_path(). Replace os.path.join with / operator, os.makedirs with Path.mkdir, and os.path.join(dir, 'ty.sqlite3') with path / 'ty.sqlite3'.",
+      "before": "os.makedirs(db_dir, exist_ok=True)\ndb_path = os.path.join(db_dir, \"ty.sqlite3\")\nreturn f\"sqlite:///{db_path}\"",
+      "after": "db_dir_path = Path(db_dir)\ndb_dir_path.mkdir(parents=True, exist_ok=True)\nreturn f\"sqlite:///{db_dir_path / 'ty.sqlite3'}\""
+    },
+    {
+      "id": "T05",
+      "title": "Replace 'import datetime' with 'from datetime import date' in models.py",
+      "priority": "low",
+      "file": "app/database/models.py",
+      "problem": "The module imports the entire 'datetime' package and then references 'datetime.date.today'. A targeted import is cleaner and avoids shadowing the module name with a variable.",
+      "change": "Change 'import datetime' to 'from datetime import date' and replace 'datetime.date.today' with 'date.today' in all four Column definitions.",
+      "before": "import datetime\n...\ndate = Column(Date, default=datetime.date.today, ...)",
+      "after": "from datetime import date\n...\ndate = Column(Date, default=date.today, ...)"
+    },
+    {
+      "id": "T06",
+      "title": "Modernise SQLAlchemy models to use Mapped / mapped_column",
+      "priority": "medium",
+      "file": "app/database/models.py",
+      "problem": "All four ORM models use the SQLAlchemy 1.x Column() API. SQLAlchemy 2.0+ (already required in pyproject.toml) provides Mapped[T] annotations and mapped_column() which give full type-checker support and eliminate Column() boilerplate.",
+      "change": "Rewrite all models using DeclarativeBase with Mapped[T] type annotations and mapped_column(). Keep the same table names and column constraints.",
+      "before": "class GratitudeItem(Base):\n    id = Column(Integer, primary_key=True, index=True)\n    title = Column(String(100), nullable=False)\n    ...",
+      "after": "class GratitudeItem(Base):\n    __tablename__ = \"gratitude_items\"\n    id: Mapped[int] = mapped_column(primary_key=True, index=True)\n    title: Mapped[str] = mapped_column(String(100))\n    ..."
+    },
+    {
+      "id": "T07",
+      "title": "Simplify _parse_suggestion to use model_validate",
+      "priority": "low",
+      "file": "app/ai/metadata.py",
+      "problem": "Line 166 manually filters None values and unpacks the dict as kwargs: model_cls(**{k: v for k, v in data.items() if v is not None}). Pydantic's model_validate() handles unknown and None fields gracefully and is the idiomatic API.",
+      "change": "Replace the dict-comprehension constructor call with model_cls.model_validate(data).",
+      "before": "return model_cls(**{k: v for k, v in data.items() if v is not None})",
+      "after": "return model_cls.model_validate(data)"
+    },
+    {
+      "id": "T08",
+      "title": "Remove unused logger local variable in main.py",
+      "priority": "low",
+      "file": "app/main.py",
+      "problem": "main() assigns logging.getLogger('uvicorn') to our_logger, calls our_logger.info() once, then never uses the logger again. The named variable adds noise with no benefit.",
+      "change": "Call logging.getLogger('uvicorn').info(...) inline, or assign to a module-level _log = logging.getLogger(__name__) and use that.",
+      "before": "def main() -> None:\n    our_logger = logging.getLogger(\"uvicorn\")\n    our_logger.info(\"Uvicorn running on http://localhost:5001 (Press CTRL+C to quit)\")\n    serve()",
+      "after": "def main() -> None:\n    logging.getLogger(\"uvicorn\").info(\"Uvicorn running on http://localhost:5001 (Press CTRL+C to quit)\")\n    serve()"
+    },
+    {
+      "id": "T09",
+      "title": "Harden add_affirmation view: use .get() instead of direct key access",
+      "priority": "medium",
+      "file": "app/views/add_affirmation.py",
+      "problem": "posted_form[\"text\"] raises KeyError if the 'text' field is absent (e.g. a client that submits a malformed POST). All other view files use form.get() with a default. Additionally, the local variable is named 'posted_form' while every other view uses 'form', creating unnecessary inconsistency.",
+      "change": "Rename 'posted_form' to 'form'. Change posted_form[\"text\"] to form.get(\"text\", \"\") and also strip the value, consistent with other views.",
+      "before": "posted_form = await req.form()\ntext = posted_form[\"text\"]\nauthor = posted_form.get(\"author\", \"\")",
+      "after": "form = await req.form()\ntext = str(form.get(\"text\", \"\")).strip()\nauthor = str(form.get(\"author\", \"\"))"
+    },
+    {
+      "id": "T10",
+      "title": "Tighten return-type annotation in weekly_overview service",
+      "priority": "low",
+      "file": "app/services/weekly_overview.py",
+      "problem": "get_tracked_objects_by_week returns dict[str, list[Any]], but the actual value types are known: each list holds items of a specific Read schema. Using Any weakens type-checking downstream.",
+      "change": "Define a TypeAlias for the union of all Read types and use it in the return annotation.",
+      "before": "from typing import Any\n...\ndef get_tracked_objects_by_week(...) -> dict[str, list[Any]]:",
+      "after": "from app.validation.schemas import (\n    GratitudeItemRead, GoodThingsThatHappenedToMeRead,\n    AffirmationRead, PositiveQuoteRead,\n)\nTrackedItem = GratitudeItemRead | GoodThingsThatHappenedToMeRead | AffirmationRead | PositiveQuoteRead\n...\ndef get_tracked_objects_by_week(...) -> dict[str, list[TrackedItem]]:"
+    }
+  ]
+}
