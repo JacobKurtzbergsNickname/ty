@@ -3,7 +3,7 @@ Pydantic schemas for validation (example: ToDo item)
 """
 
 from datetime import date as D
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class GratitudeItemCreate(BaseModel):
@@ -15,6 +15,8 @@ class GratitudeItemCreate(BaseModel):
 
 
 class GratitudeItemRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     title: str
     description: str
@@ -30,6 +32,8 @@ class GoodThingsThatHappenedToMeCreate(BaseModel):
 
 
 class GoodThingsThatHappenedToMeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     description: str
     impact: str
@@ -43,6 +47,8 @@ class AffirmationCreate(BaseModel):
 
 
 class AffirmationRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     text: str
     author: str
@@ -56,6 +62,8 @@ class PositiveQuoteCreate(BaseModel):
 
 
 class PositiveQuoteRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     text: str
     author: str

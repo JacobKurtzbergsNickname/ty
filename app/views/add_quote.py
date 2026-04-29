@@ -1,4 +1,3 @@
-from typing import cast
 from fasthtml.common import *
 from fasthtml.core import Request, FT
 from app.services.positive_quote import create_positive_quote
@@ -11,8 +10,8 @@ quote_app, rt = fast_app()
 async def create_positive_quote_view(req: Request) -> FT:
     if req.method == "POST":
         form = await req.form()
-        text = cast(str, form.get("text", "")).strip()
-        author = cast(str, form.get("author", ""))
+        text = str(form.get("text", "")).strip()
+        author = str(form.get("author", ""))
         if text:
             create_positive_quote(
                 PositiveQuoteCreate(

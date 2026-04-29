@@ -2,7 +2,7 @@
 Service functions for Affirmation model.
 """
 
-from typing import List, Optional
+from sqlalchemy import select
 from app.database.db import Session
 from app.database.models import Affirmation
 from app.validation.schemas import AffirmationCreate, AffirmationRead
@@ -18,36 +18,17 @@ def create_affirmation(data: AffirmationCreate) -> AffirmationRead:
         session.add(item)
         session.commit()
         session.refresh(item)
-
-        ar = AffirmationRead(
-            id=int(item.id),
-            text=item.text,
-            author=item.author,
-            date=item.date,
-        )
-        return ar
+        return AffirmationRead.model_validate(item)
 
 
-def get_affirmation(item_id: int) -> Optional[AffirmationRead]:
+def get_affirmation(item_id: int) -> AffirmationRead | None:
     with Session() as session:
-        item = session.get(Affirmation, item_id)
-        if not item:
-            return None
-        return AffirmationRead(
-            id=int(item.id),
-            text=item.text,
-            author=item.author,
-        )
+        if item := session.get(Affirmation, item_id):
+            return AffirmationRead.model_validate(item)
+        return None
 
 
-def list_affirmations() -> List[AffirmationRead]:
+def list_affirmations() -> list[AffirmationRead]:
     with Session() as session:
-        items = session.query(Affirmation).all()
-        return [
-            AffirmationRead(
-                id=i.id,
-                text=i.text,
-                author=i.author,
-            )
-            for i in items
-        ]
+        items = session.scalars(select(Affirmation)).all()
+        return [AffirmationRead.model_validate(i) for i in items]

@@ -2,7 +2,7 @@
 Service functions for GoodThingsThatHappenedToMe model.
 """
 
-from typing import List, Optional
+from sqlalchemy import select
 from app.database.db import Session
 from app.database.models import GoodThingsThatHappenedToMe
 from app.validation.schemas import (
@@ -23,34 +23,17 @@ def create_good_thing(
         session.add(item)
         session.commit()
         session.refresh(item)
-        return GoodThingsThatHappenedToMeRead(
-            id=item.id,
-            description=item.description,
-            impact=item.impact,
-            date=item.date,
-        )
+        return GoodThingsThatHappenedToMeRead.model_validate(item)
 
 
-def get_good_thing(item_id: int) -> Optional[GoodThingsThatHappenedToMeRead]:
+def get_good_thing(item_id: int) -> GoodThingsThatHappenedToMeRead | None:
     with Session() as session:
-        item = session.get(GoodThingsThatHappenedToMe, item_id)
-        if not item:
-            return None
-        return GoodThingsThatHappenedToMeRead(
-            id=item.id,
-            description=item.description,
-            impact=item.impact,
-        )
+        if item := session.get(GoodThingsThatHappenedToMe, item_id):
+            return GoodThingsThatHappenedToMeRead.model_validate(item)
+        return None
 
 
-def list_good_things() -> List[GoodThingsThatHappenedToMeRead]:
+def list_good_things() -> list[GoodThingsThatHappenedToMeRead]:
     with Session() as session:
-        items = session.query(GoodThingsThatHappenedToMe).all()
-        return [
-            GoodThingsThatHappenedToMeRead(
-                id=i.id,
-                description=i.description,
-                impact=i.impact,
-            )
-            for i in items
-        ]
+        items = session.scalars(select(GoodThingsThatHappenedToMe)).all()
+        return [GoodThingsThatHappenedToMeRead.model_validate(i) for i in items]

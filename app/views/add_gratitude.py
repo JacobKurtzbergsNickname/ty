@@ -1,4 +1,3 @@
-from typing import cast
 from fasthtml.common import *
 from fasthtml.core import Request, FT
 from app.services.gratitude import create_gratitude_item
@@ -11,10 +10,10 @@ add_gratitude_app, rt = fast_app()
 async def create_gratitude_view(req: Request) -> FT:
     if req.method == "POST":
         form = await req.form()
-        title = cast(str, form.get("title", "")).strip()
-        description = cast(str, form.get("description", "")).strip()
-        how_happy = cast(int, form.get("how_happy_am_i_about_this", 1))
-        reused = cast(int, form.get("reused", 0))
+        title = str(form.get("title", "")).strip()
+        description = str(form.get("description", "")).strip()
+        how_happy = int(form.get("how_happy_am_i_about_this", 1))
+        reused = int(form.get("reused", 0))
         if title:
             create_gratitude_item(
                 GratitudeItemCreate(

@@ -13,6 +13,7 @@ Public functions
 from __future__ import annotations
 
 import base64
+import binascii
 
 import httpx
 
@@ -92,5 +93,5 @@ def generate_image(
 
     try:
         return base64.b64decode(images[0])
-    except Exception as exc:
+    except (binascii.Error, ValueError) as exc:
         raise ImageGenError(f"Failed to decode image data: {exc}") from exc
